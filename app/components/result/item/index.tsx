@@ -16,6 +16,7 @@ import Clipboard from '@/app/components/base/icons/line/clipboard'
 import RefreshCcw01 from '@/app/components/base/icons/line/refresh-ccw-01'
 import CodeEditor from '@/app/components/result/workflow/code-editor'
 import WorkflowProcessItem from '@/app/components/result/workflow/workflow-process'
+import FileDownload from '@/app/components/base/file-download'
 import { CodeLanguage } from '@/types/app'
 
 export type IGenerationItemProps = {
@@ -155,13 +156,59 @@ const GenerationItem: FC<IGenerationItemProps> = ({
                   <Markdown content={content} />
                 )}
                 {!isError && (typeof content !== 'string') && (
-                  <CodeEditor
-                    readOnly
-                    title={<div />}
-                    language={CodeLanguage.json}
-                    value={content}
-                    isJSONStringifyBeauty
-                  />
+                  <>
+                    <CodeEditor
+                      readOnly
+                      title={<div />}
+                      language={CodeLanguage.json}
+                      value={content}
+                      isJSONStringifyBeauty
+                    />
+                    {/* 检查是否有文件输出 */}
+                    {(() => {
+                      // 多种方式查找文件的函数
+                      const findFiles = (obj: any): any[] => {
+                        if (!obj) return []
+
+                        // 情况1: 直接是文件数组
+                        if (Array.isArray(obj) && obj.length > 0 && obj[0]?.url) {
+                          return obj
+                        }
+
+                        // 情况2: 有 files 属性
+                        if (obj.files && Array.isArray(obj.files)) {
+                          return obj.files
+                        }
+
+                        // 情况3: 检查是否是单个文件对象
+                        if (obj.url && obj.filename) {
+                          return [obj]
+                        }
+
+                        // 情况4: 递归检查对象的所有属性
+                        if (typeof obj === 'object') {
+                          for (const key in obj) {
+                            if (obj.hasOwnProperty(key)) {
+                              const result = findFiles(obj[key])
+                              if (result.length > 0) {
+                                return result
+                              }
+                            }
+                          }
+                        }
+
+                        return []
+                      }
+
+                      const files = findFiles(content)
+
+                      return files.length > 0 ? (
+                        <div className="mt-4">
+                          <FileDownload files={files} />
+                        </div>
+                      ) : null
+                    })()}
+                  </>
                 )}
               </div>
             </div>

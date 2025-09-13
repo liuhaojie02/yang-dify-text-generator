@@ -337,13 +337,17 @@ export const ssePost = (
   globalThis.fetch(urlWithPrefix, options)
     .then((res: any) => {
       if (!/^(2|3)\d{2}$/.test(res.status)) {
-        // eslint-disable-next-line no-new
-        new Promise(() => {
-          res.json().then((data: any) => {
-            Toast.notify({ type: 'error', message: data.message || 'Server Error' })
-          })
+        // 处理错误响应
+        res.json().then((data: any) => {
+          const errorMessage = data.message || 'Server Error'
+          Toast.notify({ type: 'error', message: errorMessage })
+          onError?.(errorMessage)
+        }).catch((jsonError: any) => {
+          // 如果JSON解析失败，使用默认错误消息
+          const fallbackMessage = `Server Error (${res.status})`
+          Toast.notify({ type: 'error', message: fallbackMessage })
+          onError?.(fallbackMessage)
         })
-        onError?.('Server Error')
         return
       }
       return handleStream(res, (str: string, isFirstMessage: boolean, moreInfo: IOnDataMoreInfo) => {
