@@ -6,6 +6,12 @@ const nextConfig = {
   experimental: {
     // appDir: true,
   },
+  // 静态导出配置 - 用于Cloudflare Pages部署
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
   // fix all before production. Now it slow the develop speed.
   eslint: {
     // Warning: This allows production builds to successfully complete even if
