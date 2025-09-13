@@ -16,7 +16,7 @@ const translation = {
     queryPlaceholder: '请输入文本内容',
     run: '运行',
     copy: '拷贝',
-    title: 'AI 可行性研究生成',
+    title: 'AI可行性研究生成',
     resultTitle: 'AI 书写',
     noData: 'AI 会在这里给你惊喜。',
     csvUploadTitle: '将您的 CSV 文件拖放到此处，或',
