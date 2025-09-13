@@ -1,9 +1,10 @@
 import React from 'react'
-import HomePage from '@/app/components/home'
+
+import Main from '@/app/components'
 
 const App = () => {
   return (
-    <HomePage />
+    <Main />
   )
 }
 

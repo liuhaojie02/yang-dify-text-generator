@@ -4,11 +4,11 @@ export const API_KEY = `${process.env.NEXT_PUBLIC_APP_KEY}`
 export const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`
 export const IS_WORKFLOW = `${process.env.NEXT_PUBLIC_APP_TYPE_WORKFLOW}` === 'workflow'
 export const APP_INFO: AppInfo = {
-  title: 'Text Generator APP',
-  description: 'App description',
+  title: 'AI智能助手',
+  description: '强大的AI工具集合，让您的工作更高效、更智能',
   copyright: '',
   privacy_policy: '',
-  default_language: 'en-US',
+  default_language: 'zh-Hans',
 }
 
 export const API_PREFIX = '/api'

@@ -1,9 +1,10 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouter } from 'next/navigation'
 import cn from 'classnames'
 import { useBoolean, useClickAway } from 'ahooks'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import RunOnce from './run-once'
 import RunBatch from './run-batch'
 import ResDownload from './run-batch/res-download'
@@ -43,6 +44,7 @@ type Task = {
 
 const TextGeneration = () => {
   const { t } = useTranslation()
+  const router = useRouter()
 
   const media = useBreakpoints()
   const isPC = media === MediaType.pc
@@ -477,6 +479,13 @@ const TextGeneration = () => {
           <div className='mb-6'>
             <div className='flex justify-between items-center'>
               <div className='flex items-center space-x-3'>
+                <button
+                  onClick={() => router.push('/')}
+                  className='flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors'
+                  title='返回主页'
+                >
+                  <ArrowLeftIcon className='w-5 h-5 text-gray-600' />
+                </button>
                 <div className={cn(s.appIcon, 'shrink-0')}></div>
                 <div className='text-lg text-gray-800 font-semibold'>{APP_INFO.title}</div>
               </div>
