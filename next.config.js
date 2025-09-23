@@ -6,9 +6,9 @@ const nextConfig = {
   experimental: {
     // appDir: true,
   },
-  // 静态导出配置 - 用于Cloudflare Pages部署
-  output: 'export',
-  trailingSlash: true,
+  // 静态导出配置 - 用于Cloudflare Pages部署 (开发时暂时禁用)
+  // output: 'export',
+  // trailingSlash: true,
   images: {
     unoptimized: true,
   },
