@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   PlayIcon,
@@ -9,6 +9,7 @@ import type { PromptConfig, VisionFile, VisionSettings } from '@/types/app'
 import Button from '@/app/components/base/button'
 import { DEFAULT_VALUE_MAX_LEN } from '@/config'
 import TextGenerationImageUploader from '@/app/components/base/image-uploader/text-generation-image-uploader'
+import FileUploader, { type FileItem } from '@/app/components/base/file-uploader'
 
 export type IRunOnceProps = {
   promptConfig: PromptConfig
@@ -17,6 +18,7 @@ export type IRunOnceProps = {
   onSend: () => void
   visionConfig: VisionSettings
   onVisionFilesChange: (files: VisionFile[]) => void
+  onFilesChange?: (files: FileItem[]) => void
 }
 const RunOnce: FC<IRunOnceProps> = ({
   promptConfig,
@@ -25,66 +27,108 @@ const RunOnce: FC<IRunOnceProps> = ({
   onSend,
   visionConfig,
   onVisionFilesChange,
+  onFilesChange,
 }) => {
   const { t } = useTranslation()
+  const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([])
+
+  const handleFilesChange = (files: FileItem[]) => {
+    setUploadedFiles(files)
+    onFilesChange?.(files)
+
+    // 将文件信息更新到inputs中
+    const fileInputs = files.reduce((acc, file, index) => {
+      acc[`file_${index}`] = file.name
+      acc[`file_content_${index}`] = file.file
+      return acc
+    }, {} as Record<string, any>)
+
+    onInputsChange({ ...inputs, ...fileInputs, hasFiles: files.length > 0 })
+  }
 
   const onClear = () => {
     const newInputs: Record<string, any> = {}
     promptConfig.prompt_variables.forEach((item) => {
       newInputs[item.key] = ''
     })
+    setUploadedFiles([])
     onInputsChange(newInputs)
   }
+
+  const canSend = uploadedFiles.length > 0 && uploadedFiles.every(file => file.uploaded)
 
   return (
     <div className="">
       <section>
-        {/* input form */}
+        {/* 文件上传区域 */}
         <form>
-          {promptConfig.prompt_variables.map(item => (
-            <div className='w-full mt-4' key={item.key}>
-              <label className='text-gray-900 text-sm font-medium'>{item.name}</label>
-              <div className='mt-2'>
-                {item.type === 'select' && (
-                  <Select
-                    className='w-full'
-                    defaultValue={inputs[item.key]}
-                    onSelect={(i) => { onInputsChange({ ...inputs, [item.key]: i.value }) }}
-                    items={(item.options || []).map(i => ({ name: i, value: i }))}
-                    allowSearch={false}
-                    bgClassName='bg-gray-50'
-                  />
-                )}
-                {item.type === 'string' && (
-                  <input
-                    type="text"
-                    className="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
-                    placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
-                    value={inputs[item.key]}
-                    onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
-                    maxLength={item.max_length || DEFAULT_VALUE_MAX_LEN}
-                  />
-                )}
-                {item.type === 'paragraph' && (
-                  <textarea
-                    className="block w-full h-[104px] p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
-                    placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
-                    value={inputs[item.key]}
-                    onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
-                  />
-                )}
-                {item.type === 'number' && (
-                  <input
-                    type="number"
-                    className="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
-                    placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
-                    value={inputs[item.key]}
-                    onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
-                  />
-                )}
-              </div>
+          <div className='w-full mt-4'>
+            <label className='text-gray-900 text-sm font-medium mb-2 block'>
+              {t('app.generation.fileUpload.title')}
+            </label>
+            <FileUploader
+              onFilesChange={handleFilesChange}
+              accept=".txt,.md,.mdx,.markdown,.pdf,.html,.xlsx,.xls,.doc,.docx,.csv,.eml,.msg,.pptx,.ppt,.xml,.epub,.jpg,.jpeg,.png,.gif,.webp,.svg"
+              multiple={false}
+              maxSize={50}
+              maxFiles={1}
+              className="mt-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {t('app.generation.fileUpload.description')}
+            </p>
+          </div>
+
+          {/* 可选的额外参数输入 */}
+          {promptConfig.prompt_variables.length > 0 && (
+            <div className='mt-6'>
+              <h3 className='text-gray-900 text-sm font-medium mb-3'>附加参数 (可选)</h3>
+              {promptConfig.prompt_variables.map(item => (
+                <div className='w-full mt-4' key={item.key}>
+                  <label className='text-gray-900 text-sm font-medium'>{item.name}</label>
+                  <div className='mt-2'>
+                    {item.type === 'select' && (
+                      <Select
+                        className='w-full'
+                        defaultValue={inputs[item.key]}
+                        onSelect={(i) => { onInputsChange({ ...inputs, [item.key]: i.value }) }}
+                        items={(item.options || []).map(i => ({ name: i, value: i }))}
+                        allowSearch={false}
+                        bgClassName='bg-gray-50'
+                      />
+                    )}
+                    {item.type === 'string' && (
+                      <input
+                        type="text"
+                        className="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
+                        placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
+                        value={inputs[item.key]}
+                        onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
+                        maxLength={item.max_length || DEFAULT_VALUE_MAX_LEN}
+                      />
+                    )}
+                    {item.type === 'paragraph' && (
+                      <textarea
+                        className="block w-full h-[104px] p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
+                        placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
+                        value={inputs[item.key]}
+                        onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
+                      />
+                    )}
+                    {item.type === 'number' && (
+                      <input
+                        type="number"
+                        className="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
+                        placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
+                        value={inputs[item.key]}
+                        onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
           {
             visionConfig?.enabled && (
               <div className="w-full mt-4">
@@ -103,15 +147,13 @@ const RunOnce: FC<IRunOnceProps> = ({
               </div>
             )
           }
-          {promptConfig.prompt_variables.length > 0 && (
-            <div className='mt-4 h-[1px] bg-gray-100'></div>
-          )}
+          <div className='mt-6 h-[1px] bg-gray-100'></div>
           <div className='w-full mt-4'>
             <div className="flex items-center justify-between">
               <Button
                 className='!h-8 !p-3'
                 onClick={onClear}
-                disabled={false}
+                disabled={uploadedFiles.length === 0}
               >
                 <span className='text-[13px]'>{t('common.operation.clear')}</span>
               </Button>
@@ -119,10 +161,17 @@ const RunOnce: FC<IRunOnceProps> = ({
                 type="primary"
                 className='!h-8 !pl-3 !pr-4'
                 onClick={onSend}
-                disabled={false}
+                disabled={!canSend}
               >
                 <PlayIcon className="shrink-0 w-4 h-4 mr-1" aria-hidden="true" />
-                <span className='text-[13px]'>{t('app.generation.run')}</span>
+                <span className='text-[13px]'>
+                  {uploadedFiles.length === 0
+                    ? t('app.generation.fileUpload.pleaseUpload')
+                    : uploadedFiles.some(f => !f.uploaded)
+                      ? t('app.generation.fileUpload.uploading')
+                      : t('app.generation.run')
+                  }
+                </span>
               </Button>
             </div>
           </div>

@@ -3,6 +3,9 @@ import { getLocaleOnServer } from '@/i18n/server'
 import './styles/globals.css'
 import './styles/markdown.scss'
 
+// 强制动态渲染，因为我们使用了cookies和headers
+export const dynamic = 'force-dynamic'
+
 const LocaleLayout = ({
   children,
 }: {

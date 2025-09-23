@@ -339,7 +339,23 @@ export const ssePost = (
       if (!/^(2|3)\d{2}$/.test(res.status)) {
         // 处理错误响应
         res.json().then((data: any) => {
-          const errorMessage = data.message || 'Server Error'
+          console.error('API错误详情:', data)
+          let errorMessage = data.error || data.message || 'Server Error'
+
+          // 如果有详细错误信息，添加到消息中
+          if (data.details) {
+            errorMessage += ` (${data.details})`
+          }
+
+          // 如果是演示模式，提供特殊处理
+          if (data.demo || data.error?.includes('演示模式')) {
+            errorMessage = data.message || '当前为演示模式，请配置 Dify API 以使用完整功能'
+          }
+          // 如果是配置错误，提供更友好的提示
+          else if (data.error?.includes('未配置') || data.details?.includes('environment variables')) {
+            errorMessage = '请配置 Dify API 密钥和应用ID'
+          }
+
           Toast.notify({ type: 'error', message: errorMessage })
           onError?.(errorMessage)
         }).catch((jsonError: any) => {

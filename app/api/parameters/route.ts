@@ -11,6 +11,32 @@ export async function GET(request: NextRequest) {
     })
   }
   catch (error) {
-    return NextResponse.json([])
+    // 提供mock数据用于演示
+    const mockData = {
+      user_input_form: [
+        {
+          'text-input': {
+            label: '附加说明',
+            variable: 'additional_notes',
+            required: false,
+            max_length: 500
+          }
+        }
+      ],
+      file_upload: {
+        image: {
+          enabled: false,
+          number_limits: 0,
+          detail: 'low',
+          transfer_methods: []
+        }
+      },
+      system_parameters: {
+        image_file_size_limit: 10
+      }
+    }
+    return NextResponse.json(mockData, {
+      headers: setSession(sessionId),
+    })
   }
 }

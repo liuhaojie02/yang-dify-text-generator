@@ -11,6 +11,7 @@ import ResDownload from './run-batch/res-download'
 import Result from './result'
 import Button from './base/button'
 import s from './style.module.css'
+import type { FileItem } from './base/file-uploader'
 import AlertCircle from '@/app/components/base/icons/line/alert-circle'
 import TabHeader from '@/app/components/base/tab-header'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
@@ -59,9 +60,11 @@ const TextGeneration = () => {
   /*
   * app info
   */
-  const hasSetAppConfig = APP_ID && API_KEY
+  const hasSetAppConfig = APP_ID && API_KEY && APP_ID !== 'undefined' && API_KEY !== 'undefined'
   const [appUnavailable, setAppUnavailable] = useState<boolean>(false)
   const [isUnknwonReason, setIsUnknwonReason] = useState<boolean>(false)
+  const [isInitializing, setIsInitializing] = useState<boolean>(true)
+
 
   const [inputs, setInputs] = useState<Record<string, any>>({})
   const [promptConfig, setPromptConfig] = useState<PromptConfig | null>(null)
@@ -116,6 +119,7 @@ const TextGeneration = () => {
     transfer_methods: [TransferMethod.local_file],
   })
   const [completionFiles, setCompletionFiles] = useState<VisionFile[]>([])
+  const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([])
   const handleSend = async () => {
     setIsCallBatchAPI(false)
     setControlSend(Date.now())
@@ -341,35 +345,72 @@ const TextGeneration = () => {
 
   useEffect(() => {
     if (!hasSetAppConfig) {
+      console.warn('环境变量未配置，应用不可用')
       setAppUnavailable(true)
+      setIsInitializing(false)
       return
     }
-    (async () => {
-      try {
-        changeLanguage(APP_INFO.default_language)
 
-        const { user_input_form, file_upload, system_parameters }: any = await fetchAppParams()
-        const prompt_variables = userInputsFormToPromptVariables(user_input_form)
+    console.log('开始初始化应用参数...')
+      ; (async () => {
+        try {
+          changeLanguage(APP_INFO.default_language)
 
-        setPromptConfig({
-          prompt_template: '',
-          prompt_variables,
-        } as PromptConfig)
-        setVisionConfig({
-          ...file_upload?.image,
-          image_file_size_limit: system_parameters?.image_file_size_limit || 0,
-        })
-      }
-      catch (e: any) {
-        if (e.status === 404) {
-          setAppUnavailable(true)
+          console.log('正在获取API参数...')
+          const { user_input_form, file_upload, system_parameters }: any = await fetchAppParams()
+          console.log('API参数获取成功:', { user_input_form, file_upload, system_parameters })
+
+          const prompt_variables = userInputsFormToPromptVariables(user_input_form)
+          console.log('处理后的prompt_variables:', prompt_variables)
+
+          setPromptConfig({
+            prompt_template: '',
+            prompt_variables,
+          } as PromptConfig)
+          setVisionConfig({
+            ...file_upload?.image,
+            image_file_size_limit: system_parameters?.image_file_size_limit || 0,
+          })
+
+          console.log('应用初始化完成')
+          setIsInitializing(false)
         }
-        else {
-          setIsUnknwonReason(true)
-          setAppUnavailable(true)
+        catch (e: any) {
+          console.error('API参数获取失败，错误详情:', e)
+          console.log('错误类型:', typeof e)
+          console.log('错误状态:', e?.status)
+          console.log('错误消息:', e?.message)
+
+          // 使用默认配置而不是设置应用不可用
+          console.log('正在设置默认配置...')
+          setPromptConfig({
+            prompt_template: '',
+            prompt_variables: [{
+              key: 'additional_notes',
+              name: '附加说明',
+              type: 'paragraph',
+              required: false,
+              max_length: 500
+            }]
+          } as PromptConfig)
+
+          setVisionConfig({
+            enabled: false,
+            number_limits: 0,
+            detail: 'low' as any,
+            transfer_methods: [],
+            image_file_size_limit: 10
+          })
+
+          console.log('默认配置设置完成，应用将继续运行')
+          setIsInitializing(false)
+
+          // 只在严重错误时才设置应用不可用
+          // if (e.status === 404) {
+          //   setAppUnavailable(true)
+          // }
         }
-      }
-    })()
+      })()
   }, [])
 
   useEffect(() => {
@@ -383,25 +424,33 @@ const TextGeneration = () => {
     hideResSidebar()
   }, resRef)
 
-  const renderRes = (task?: Task) => (
-    <Result
-      isWorkflow={IS_WORKFLOW}
-      isCallBatchAPI={isCallBatchAPI}
-      isPC={isPC}
-      isMobile={isMobile}
-      isError={task?.status === TaskStatus.failed}
-      promptConfig={promptConfig}
-      inputs={isCallBatchAPI ? (task as Task).params.inputs : inputs}
-      controlSend={controlSend}
-      controlRetry={task?.status === TaskStatus.failed ? controlRetry : 0}
-      controlStopResponding={controlStopResponding}
-      onShowRes={showResSidebar}
-      taskId={task?.id}
-      onCompleted={handleCompleted}
-      visionConfig={visionConfig}
-      completionFiles={completionFiles}
-    />
-  )
+  const renderRes = (task?: Task) => {
+    // 确保 currentPromptConfig 在使用时已经定义
+    const safePromptConfig = promptConfig || {
+      prompt_template: '',
+      prompt_variables: []
+    }
+
+    return (
+      <Result
+        isWorkflow={IS_WORKFLOW}
+        isCallBatchAPI={isCallBatchAPI}
+        isPC={isPC}
+        isMobile={isMobile}
+        isError={task?.status === TaskStatus.failed}
+        promptConfig={safePromptConfig}
+        inputs={isCallBatchAPI ? (task as Task).params.inputs : inputs}
+        controlSend={controlSend}
+        controlRetry={task?.status === TaskStatus.failed ? controlRetry : 0}
+        controlStopResponding={controlStopResponding}
+        onShowRes={showResSidebar}
+        taskId={task?.id}
+        onCompleted={handleCompleted}
+        visionConfig={visionConfig}
+        completionFiles={completionFiles}
+      />
+    )
+  }
 
   const renderBatchRes = () => {
     return (showTaskList.map(task => renderRes(task)))
@@ -466,9 +515,9 @@ const TextGeneration = () => {
   )
 
   if (appUnavailable)
-    return <AppUnavailable isUnknwonReason={isUnknwonReason} errMessage={!hasSetAppConfig ? 'Please set APP_ID and API_KEY in config/index.tsx' : ''} />
+    return <AppUnavailable isUnknwonReason={isUnknwonReason} errMessage={!hasSetAppConfig ? `请配置环境变量: APP_ID="${APP_ID}", API_KEY="${API_KEY}"` : ''} />
 
-  if (!APP_INFO || !promptConfig)
+  if (!APP_INFO || isInitializing)
     return <Loading type='app' />
 
   return (
@@ -520,15 +569,16 @@ const TextGeneration = () => {
               <RunOnce
                 inputs={inputs}
                 onInputsChange={setInputs}
-                promptConfig={promptConfig}
+                promptConfig={promptConfig || { prompt_template: '', prompt_variables: [] }}
                 onSend={handleSend}
                 visionConfig={visionConfig}
                 onVisionFilesChange={setCompletionFiles}
+                onFilesChange={setUploadedFiles}
               />
             </div>
             <div className={cn(isInBatchTab ? 'block' : 'hidden')}>
               <RunBatch
-                vars={promptConfig.prompt_variables}
+                vars={promptConfig?.prompt_variables || []}
                 onSend={handleRunBatch}
                 isAllFinished={allTaskRuned}
               />

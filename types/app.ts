@@ -91,6 +91,18 @@ export type VisionFile = {
   upload_file_id: string
 }
 
+export type DocumentFile = {
+  id: string
+  name: string
+  size: number
+  type: string
+  file: File
+  progress: number
+  uploaded: boolean
+  error?: string
+  upload_file_id?: string
+}
+
 export enum BlockEnum {
   Start = 'start',
   End = 'end',
