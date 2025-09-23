@@ -448,6 +448,7 @@ const TextGeneration = () => {
         onCompleted={handleCompleted}
         visionConfig={visionConfig}
         completionFiles={completionFiles}
+        uploadedFiles={uploadedFiles}
       />
     )
   }

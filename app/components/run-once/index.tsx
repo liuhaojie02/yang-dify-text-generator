@@ -36,10 +36,10 @@ const RunOnce: FC<IRunOnceProps> = ({
     setUploadedFiles(files)
     onFilesChange?.(files)
 
-    // 将文件信息更新到inputs中
+    // 将文件信息更新到inputs中，但不包含实际文件对象
     const fileInputs = files.reduce((acc, file, index) => {
       acc[`file_${index}`] = file.name
-      acc[`file_content_${index}`] = file.file
+      // 不在inputs中直接存储文件对象，因为它无法序列化
       return acc
     }, {} as Record<string, any>)
 

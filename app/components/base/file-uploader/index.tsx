@@ -120,7 +120,7 @@ const FileUploader: FC<FileUploaderProps> = ({
                 updateFileProgress(fileItem.id, progress, false)
             },
             onSuccessCallback: (res) => {
-                updateFileProgress(fileItem.id, 100, true)
+                updateFileProgress(fileItem.id, 100, true, res.id)
             },
             onErrorCallback: () => {
                 notify({ type: 'error', message: `${t('app.generation.fileUpload.uploadFailed')} "${fileItem.name}"` })
@@ -137,11 +137,11 @@ const FileUploader: FC<FileUploaderProps> = ({
         })
     }
 
-    const updateFileProgress = (id: string, progress: number, uploaded: boolean) => {
+    const updateFileProgress = (id: string, progress: number, uploaded: boolean, uploadFileId?: string) => {
         setFiles(prev => {
             const updated = prev.map(file =>
                 file.id === id
-                    ? { ...file, progress, uploaded }
+                    ? { ...file, progress, uploaded, error: undefined, upload_file_id: uploadFileId }
                     : file
             )
             onFilesChange(updated)
