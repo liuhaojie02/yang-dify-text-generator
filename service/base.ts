@@ -153,6 +153,7 @@ const handleStream = (
             return
           try {
             bufferObj = JSON.parse(message.substring(6)) // remove data: and parse as json
+            console.log('SSE收到事件:', bufferObj.event, bufferObj)
           }
           catch (e) {
             onData('', isFirstMessage, {
@@ -172,6 +173,7 @@ const handleStream = (
             onWorkflowStarted?.(bufferObj as WorkflowStartedResponse)
           }
           else if (bufferObj.event === 'workflow_finished') {
+            console.log('SSE收到workflow_finished事件:', bufferObj)
             onWorkflowFinished?.(bufferObj as WorkflowFinishedResponse)
           }
           else if (bufferObj.event === 'node_started') {

@@ -153,6 +153,7 @@ const Result: FC<IResultProps> = ({
 
     // 处理文档文件
     if (uploadedFiles && uploadedFiles.length > 0) {
+      console.log('处理上传的文档文件:', uploadedFiles)
       const documentFiles = uploadedFiles.filter(file => file.uploaded).map(file => ({
         type: 'document',
         transfer_method: 'local_file',
@@ -160,8 +161,10 @@ const Result: FC<IResultProps> = ({
         filename: file.name
       }))
 
+      console.log('筛选后的文档文件:', documentFiles)
       if (documentFiles.length > 0) {
         data.files = [...(data.files || []), ...documentFiles]
+        console.log('最终的files数据:', data.files)
       }
     }
 
@@ -188,6 +191,8 @@ const Result: FC<IResultProps> = ({
         isTimeout = true
       }
     })()
+
+    console.log('准备发送工作流消息，完整data:', JSON.stringify(data, null, 2))
 
     if (isWorkflow) {
       sendWorkflowMessage(
@@ -228,8 +233,10 @@ const Result: FC<IResultProps> = ({
           },
           onWorkflowFinished: (response) => {
             console.log('工作流完成回调被调用，完整响应:', response)
+            console.log('response结构:', Object.keys(response))
             const { data } = response
             console.log('工作流完成数据:', data)
+            console.log('data结构:', data ? Object.keys(data) : 'data为空')
 
             if (isTimeout)
               return
