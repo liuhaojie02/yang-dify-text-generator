@@ -1,7 +1,7 @@
 'use client'
 
 import type { ChangeEvent, FC } from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import cn from 'classnames'
 import { DocumentArrowUpIcon, DocumentIcon, XMarkIcon } from '@heroicons/react/24/outline'
@@ -27,6 +27,7 @@ type FileUploaderProps = {
     maxFiles?: number
     disabled?: boolean
     className?: string
+    files?: FileItem[] // 受控的文件列表
 }
 
 const FileUploader: FC<FileUploaderProps> = ({
@@ -36,12 +37,20 @@ const FileUploader: FC<FileUploaderProps> = ({
     maxSize = 10,
     maxFiles = 1,
     disabled = false,
-    className = ''
+    className = '',
+    files: controlledFiles
 }) => {
     const [files, setFiles] = useState<FileItem[]>([])
     const [isDragOver, setIsDragOver] = useState(false)
     const { notify } = Toast
     const { t } = useTranslation()
+
+    // 如果有受控的files，使用受控模式
+    useEffect(() => {
+        if (controlledFiles !== undefined) {
+            setFiles(controlledFiles)
+        }
+    }, [controlledFiles])
 
     const validateFile = (file: File): string | null => {
         // 检查文件大小
@@ -221,7 +230,7 @@ const FileUploader: FC<FileUploaderProps> = ({
                             <span className="text-blue-600 font-medium">{t('app.generation.fileUpload.clickText')}</span>
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                            {t('app.generation.fileUpload.supportedFormats')}: {accept} ({t('app.generation.fileUpload.maxSize')} {maxSize}MB)
+                            {t('app.generation.fileUpload.supportedFormats')}: {accept}
                         </p>
                     </div>
                 </div>

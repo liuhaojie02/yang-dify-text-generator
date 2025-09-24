@@ -13,7 +13,7 @@ const translation = {
     },
     fileUpload: {
       title: '上传文档文件',
-      description: '支持上传文档类文件（PDF、Word、Excel、PowerPoint、文本、HTML、XML、EPUB等）和图片类文件（JPG、PNG、GIF、WEBP、SVG等），用于生成相关报告',
+      description: '',
       dragText: '将文件拖拽到此处，或',
       clickText: '点击选择文件',
       supportedFormats: '支持格式',

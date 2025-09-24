@@ -13,7 +13,7 @@ const translation = {
     },
     fileUpload: {
       title: 'Upload Document File',
-      description: 'Support uploading document files (PDF, Word, Excel, PowerPoint, Text, HTML, XML, EPUB, etc.) and image files (JPG, PNG, GIF, WEBP, SVG, etc.) to generate related reports',
+      description: '',
       dragText: 'Drag and drop files here, or',
       clickText: 'click to select files',
       supportedFormats: 'Supported formats',

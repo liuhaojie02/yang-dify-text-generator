@@ -80,8 +80,6 @@ const Result: FC<IResultProps> = ({
     rating: null,
   })
 
-  // 添加生成的文件状态
-  const [generatedFiles, setGeneratedFiles] = useState<any[]>([])
 
   const handleFeedback = async (feedback: Feedbacktype) => {
     await updateFeedback({ url: `/messages/${messageId}/feedbacks`, body: { rating: feedback.rating } })
@@ -232,15 +230,20 @@ const Result: FC<IResultProps> = ({
             }))
           },
           onWorkflowFinished: (response) => {
-            console.log('工作流完成回调被调用，完整响应:', response)
-            console.log('response结构:', Object.keys(response))
+            console.log('🎯 工作流完成回调被调用，完整响应:', response)
+            console.log('🔍 response结构:', Object.keys(response))
             const { data } = response
-            console.log('工作流完成数据:', data)
-            console.log('data结构:', data ? Object.keys(data) : 'data为空')
+            console.log('📊 工作流完成数据:', data)
+            console.log('🗂️ data结构:', data ? Object.keys(data) : 'data为空')
+            console.log('⏰ isTimeout状态:', isTimeout)
+            console.log('🆔 tempMessageId:', tempMessageId)
 
-            if (isTimeout)
+            if (isTimeout) {
+              console.log('❌ 因为超时而退出')
               return
+            }
             if (data.error) {
+              console.log('❌ 工作流返回错误:', data.error)
               notify({ type: 'error', message: data.error })
               setResponsingFalse()
               onCompleted(getCompletionRes(), taskId, false)
@@ -248,55 +251,33 @@ const Result: FC<IResultProps> = ({
               return
             }
 
-            console.log('更新工作流状态为成功')
+            console.log('✅ 开始更新工作流状态为成功')
+            console.log('📋 当前工作流状态:', getWorkflowProccessData())
+
             setWorkflowProccessData(produce(getWorkflowProccessData()!, (draft) => {
               draft.status = data.error ? WorkflowRunningStatus.Failed : WorkflowRunningStatus.Succeeded
+              console.log('🔄 工作流状态已更新为:', draft.status)
             }))
 
-            // 处理生成的文件
-            if (data.files && data.files.length > 0) {
-              console.log('工作流直接返回的文件:', data.files)
-              setGeneratedFiles(data.files)
-            }
-
-            // 从输出文本中提取文件链接
-            let extractedFiles: any[] = []
-            if (data.outputs) {
-              const outputText = typeof data.outputs === 'string' ? data.outputs : JSON.stringify(data.outputs)
-              console.log('工作流输出文本:', outputText)
-
-              // 匹配文件链接格式: [filename.ext](url)
-              const fileRegex = /\[(.*?\.(docx|pdf|txt|xlsx|pptx|doc|xls|ppt))\]\((https?:\/\/[^\s)]+)\)/gi
-              let match
-              while ((match = fileRegex.exec(outputText)) !== null) {
-                extractedFiles.push({
-                  filename: match[1],
-                  url: match[3],
-                  type: 'document'
-                })
-              }
-
-              console.log('从输出中提取的文件数量:', extractedFiles.length)
-              if (extractedFiles.length > 0) {
-                console.log('提取的文件详情:', extractedFiles)
-                setGeneratedFiles(prev => {
-                  const newFiles = [...prev, ...extractedFiles]
-                  console.log('更新后的文件列表:', newFiles)
-                  return newFiles
-                })
-              }
-            }
-
-            if (!data.outputs)
+            console.log('📝 处理输出数据...')
+            if (!data.outputs) {
+              console.log('📝 没有输出，设置为空字符串')
               setCompletionRes('')
-            else if (Object.keys(data.outputs).length > 1)
+            } else if (Object.keys(data.outputs).length > 1) {
+              console.log('📝 多个输出，设置为对象:', data.outputs)
               setCompletionRes(data.outputs)
-            else
-              setCompletionRes(data.outputs[Object.keys(data.outputs)[0]])
+            } else {
+              const outputKey = Object.keys(data.outputs)[0]
+              console.log('📝 单个输出，键:', outputKey, '值:', data.outputs[outputKey])
+              setCompletionRes(data.outputs[outputKey])
+            }
+
+            console.log('🏁 设置响应完成状态')
             setResponsingFalse()
             setMessageId(tempMessageId)
             onCompleted(getCompletionRes(), taskId, true)
             isEnd = true
+            console.log('✅ 工作流完成处理结束')
           },
         },
       )
@@ -339,56 +320,6 @@ const Result: FC<IResultProps> = ({
       handleSend()
   }, [controlRetry])
 
-  const handleDownloadFile = (file: any) => {
-    if (file.url) {
-      const link = document.createElement('a')
-      link.href = file.url
-      link.download = file.filename || 'generated-file'
-      link.target = '_blank'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    }
-  }
-
-  const renderFileDownloads = () => {
-    console.log('渲染文件下载区域，文件数量:', generatedFiles.length, '文件列表:', generatedFiles)
-    if (generatedFiles.length === 0) {
-      console.log('没有生成的文件，不显示下载区域')
-      return null
-    }
-
-    return (
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">生成的文件</h3>
-        <div className="space-y-2">
-          {generatedFiles.map((file, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
-              <div className="flex items-center">
-                <div className="text-2xl mr-3">📄</div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {file.filename || `文件 ${index + 1}`}
-                  </p>
-                  {file.size && (
-                    <p className="text-xs text-gray-500">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </p>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => handleDownloadFile(file)}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-              >
-                下载
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   const renderTextGenerationRes = () => (
     <div>
@@ -407,7 +338,6 @@ const Result: FC<IResultProps> = ({
         isLoading={isCallBatchAPI ? (!completionRes && isResponsing) : false}
         taskId={isCallBatchAPI ? ((taskId as number) < 10 ? `0${taskId}` : `${taskId}`) : undefined}
       />
-      {renderFileDownloads()}
     </div>
   )
 

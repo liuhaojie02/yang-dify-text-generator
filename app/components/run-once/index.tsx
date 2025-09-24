@@ -52,6 +52,7 @@ const RunOnce: FC<IRunOnceProps> = ({
       newInputs[item.key] = ''
     })
     setUploadedFiles([])
+    onFilesChange?.([]) // 通知父组件清空文件
     onInputsChange(newInputs)
   }
 
@@ -67,6 +68,7 @@ const RunOnce: FC<IRunOnceProps> = ({
               {t('app.generation.fileUpload.title')}
             </label>
             <FileUploader
+              files={uploadedFiles}
               onFilesChange={handleFilesChange}
               accept=".txt,.md,.mdx,.markdown,.pdf,.html,.xlsx,.xls,.doc,.docx,.csv,.eml,.msg,.pptx,.ppt,.xml,.epub,.jpg,.jpeg,.png,.gif,.webp,.svg"
               multiple={false}
@@ -74,15 +76,16 @@ const RunOnce: FC<IRunOnceProps> = ({
               maxFiles={1}
               className="mt-2"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              {t('app.generation.fileUpload.description')}
-            </p>
+            {t('app.generation.fileUpload.description') && (
+              <p className="text-xs text-gray-500 mt-1">
+                {t('app.generation.fileUpload.description')}
+              </p>
+            )}
           </div>
 
           {/* 可选的额外参数输入 */}
           {promptConfig.prompt_variables.length > 0 && (
             <div className='mt-6'>
-              <h3 className='text-gray-900 text-sm font-medium mb-3'>附加参数 (可选)</h3>
               {promptConfig.prompt_variables.map(item => (
                 <div className='w-full mt-4' key={item.key}>
                   <label className='text-gray-900 text-sm font-medium'>{item.name}</label>
@@ -101,7 +104,7 @@ const RunOnce: FC<IRunOnceProps> = ({
                       <input
                         type="text"
                         className="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
-                        placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
+                        placeholder={item.name}
                         value={inputs[item.key]}
                         onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
                         maxLength={item.max_length || DEFAULT_VALUE_MAX_LEN}
@@ -110,7 +113,7 @@ const RunOnce: FC<IRunOnceProps> = ({
                     {item.type === 'paragraph' && (
                       <textarea
                         className="block w-full h-[104px] p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
-                        placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
+                        placeholder={item.name}
                         value={inputs[item.key]}
                         onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
                       />
@@ -119,7 +122,7 @@ const RunOnce: FC<IRunOnceProps> = ({
                       <input
                         type="number"
                         className="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 "
-                        placeholder={`${item.name}${!item.required ? `(${t('appDebug.variableTable.optional')})` : ''}`}
+                        placeholder={item.name}
                         value={inputs[item.key]}
                         onChange={(e) => { onInputsChange({ ...inputs, [item.key]: e.target.value }) }}
                       />
