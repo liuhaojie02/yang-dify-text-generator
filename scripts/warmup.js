@@ -12,24 +12,24 @@ const pages = [
 ];
 
 const checkServer = () => {
-    return new Promise((resolve) => {
-        const req = http.request({
-            hostname: 'localhost',
-            port: 3000,
-            path: '/',
-            method: 'GET',
-            timeout: 5000
-        }, (res) => {
-            resolve(true);
-        });
-
-        req.on('error', () => resolve(false));
-        req.on('timeout', () => {
-            req.destroy();
-            resolve(false);
-        });
-        req.end();
+  return new Promise((resolve) => {
+    const req = http.request({
+      hostname: 'localhost',
+      port: 3000,
+      path: '/',
+      method: 'HEAD', // 使用HEAD请求更快
+      timeout: 10000 // 增加超时时间
+    }, (res) => {
+      resolve(res.statusCode === 200);
     });
+
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(false);
+    });
+    req.end();
+  });
 };
 
 const warmupPage = (path) => {
