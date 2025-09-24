@@ -5,8 +5,8 @@ export const API_URL = `${process.env.NEXT_PUBLIC_API_URL}`
 export const IS_WORKFLOW = `${process.env.NEXT_PUBLIC_APP_TYPE_WORKFLOW}` === 'workflow'
 
 export const APP_INFO: AppInfo = {
-  title: 'AI智能助手',
-  description: '强大的AI工具集合，让您的工作更高效、更智能',
+  title: 'AI报告生成',
+  description: '',
   copyright: '',
   privacy_policy: '',
   default_language: 'zh-Hans',

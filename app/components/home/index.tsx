@@ -63,7 +63,7 @@ const HomePage: React.FC = () => {
                                 </h3>
                                 <p className="text-gray-600 leading-relaxed">
                                     智能生成专业报告<br />
-                                    支持多种格式导出
+                                    支持多种格式导入
                                 </p>
                             </div>
 
@@ -104,7 +104,7 @@ const HomePage: React.FC = () => {
 
                 {/* 底部 */}
                 <footer className="py-8 text-center text-gray-500">
-                    <p>&copy; 北京电信规划设计院有限公司. 让AI为您服务</p>
+                    <p>&copy; 北京电信规划设计院有限公司</p>
                 </footer>
             </div>
         </div>

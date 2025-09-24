@@ -279,6 +279,45 @@ const Result: FC<IResultProps> = ({
             isEnd = true
             console.log('✅ 工作流完成处理结束')
           },
+          onNodeFinished: ({ data }) => {
+            setWorkflowProccessData(produce(getWorkflowProccessData()!, (draft) => {
+              const currentIndex = draft.tracing!.findIndex(trace => trace.node_id === data.node_id)
+              if (currentIndex > -1 && draft.tracing) {
+                draft.tracing[currentIndex] = {
+                  ...(draft.tracing[currentIndex].extras
+                    ? { extras: draft.tracing[currentIndex].extras }
+                    : {}),
+                  ...data,
+                  expand: !!data.error,
+                } as any
+              }
+
+              // 检查是否所有节点都完成了
+              const allNodesCompleted = draft.tracing?.every(node =>
+                node.status === 'succeeded' || node.status === 'failed'
+              )
+
+              console.log('🔍 节点完成检查:', {
+                nodeId: data.node_id,
+                nodeStatus: data.status,
+                allNodesCompleted,
+                totalNodes: draft.tracing?.length,
+                currentStatus: draft.status
+              })
+
+              // 如果所有节点都完成了，但工作流状态还是running，则强制更新为succeeded
+              if (allNodesCompleted && draft.status === WorkflowRunningStatus.Running) {
+                console.log('🔧 强制更新工作流状态为成功（所有节点已完成）')
+                draft.status = WorkflowRunningStatus.Succeeded
+
+                // 同时设置响应完成
+                setTimeout(() => {
+                  setResponsingFalse()
+                  isEnd = true
+                }, 100)
+              }
+            }))
+          },
         },
       )
     }
